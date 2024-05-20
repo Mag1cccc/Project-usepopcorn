@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import StarRating from "./StarRating";
 
+/*
 const tempMovieData = [
   {
     imdbID: "tt1375666",
@@ -47,6 +48,7 @@ const tempWatchedData = [
     userRating: 9,
   },
 ];
+*/
 
 const average = (arr) =>
   arr.reduce((acc, cur, i, arr) => acc + cur / arr.length, 0);
@@ -54,7 +56,7 @@ const average = (arr) =>
 const KEY = "c925cd3c";
 
 export default function App() {
-  const [query, setQuery] = useState("inception");
+  const [query, setQuery] = useState("");
   const [movies, setMovies] = useState([]);
   const [watched, setWatched] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -119,9 +121,8 @@ export default function App() {
           setMovies(data.Search);
           setError("");
         } catch (err) {
-          console.error(err.message);
-
           if (err.name !== "AbortError") {
+            console.log(err.message);
             setError(err.message);
           }
         } finally {
@@ -135,6 +136,7 @@ export default function App() {
         return;
       }
 
+      handleCloseMovie();
       fetchMovies();
 
       return function () {
@@ -309,8 +311,6 @@ function MovieDetails({ selectedId, onCloseMovie, onAddWatched, watched }) {
 
   const isWatched = watched.map((movie) => movie.imdbID).includes(selectedId);
 
-  console.log(isWatched);
-
   const watchedUserRating = watched.find(
     (movie) => movie.imdbID === selectedId
   )?.userRating;
@@ -345,6 +345,23 @@ function MovieDetails({ selectedId, onCloseMovie, onAddWatched, watched }) {
 
   useEffect(
     function () {
+      function callback(e) {
+        if (e.code === "Escape") {
+          onCloseMovie();
+        }
+      }
+
+      document.addEventListener("keydown", callback);
+
+      return function () {
+        document.removeEventListener("keydown", callback);
+      };
+    },
+    [onCloseMovie]
+  );
+
+  useEffect(
+    function () {
       async function getMovieDetails() {
         setIsLoading(true);
         const res = await fetch(
@@ -366,6 +383,7 @@ function MovieDetails({ selectedId, onCloseMovie, onAddWatched, watched }) {
 
       return function () {
         document.title = "usePopcorn";
+        // console.log(`Clean up effect for movie ${title}`);
       };
     },
     [title]
@@ -474,10 +492,6 @@ function WatchedMoviesList({ watched, onDeleteWatched }) {
 }
 
 function WatchedMovie({ movie, onDeleteWatched }) {
-  // console.log("Poster value  " + movie.poster);
-  // console.log("Poster type  " + typeof movie.poster);
-  // console.log("Title value  " + movie.title);
-  // console.log("Title type  " + typeof movie.title);
   return (
     <li>
       <img src={movie.poster} alt={`${movie.title} poster`} />
